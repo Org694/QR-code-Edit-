@@ -3,101 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Nexus: Generate & Scan</title>
+    <title>QuickCode | QR & Barcode Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin-bottom: 20px; }
-        h2 { color: #333; margin-top: 0; }
-        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        button:hover { background: #0056b3; }
-        #qrcode { display: flex; justify-content: center; margin-top: 20px; }
-        #reader { width: 100%; border-radius: 8px; overflow: hidden; }
-        .result-box { background: #e9ecef; padding: 10px; border-radius: 4px; word-break: break-all; margin-top: 10px; min-height: 40px; }
-        .tab-btn { background: #6c757d; margin-bottom: 20px; }
+        :root { --primary: #6366f1; --bg: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 450px; text-align: center; }
+        h1 { font-size: 1.5rem; margin-bottom: 1.5rem; color: #1e293b; }
+        
+        input { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem; margin-bottom: 1rem; box-sizing: border-box; transition: 0.3s; }
+        input:focus { border-color: var(--primary); outline: none; }
+
+        .output-container { margin: 20px 0; padding: 20px; border: 1px dashed #cbd5e1; border-radius: 12px; background: #fff; }
+        
+        canvas, img { max-width: 100%; height: auto; margin-bottom: 10px; }
+        #barcode { width: 100%; }
+
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button { padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        
+        .btn-generate { background: var(--primary); color: white; grid-column: span 2; font-size: 1.1rem; }
+        .btn-generate:hover { background: #4f46e5; }
+        
+        .btn-share { background: #22c55e; color: white; }
+        .btn-download { background: #64748b; color: white; }
+        button:active { transform: scale(0.98); }
+
+        .label { font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
     </style>
 </head>
 <body>
 
-    <div class="container" id="gen-section">
-        <h2>🎨 QR Generator</h2>
-        <input type="text" id="text-input" placeholder="Type text or URL here..." oninput="generateQR()">
-        
-        <div id="settings">
-            <label>Size:</label>
-            <select id="size-setting" onchange="generateQR()">
-                <option value="128">Small (128x128)</option>
-                <option value="256" selected>Medium (256x256)</option>
-                <option value="512">Large (512x512)</option>
-            </select>
-        </div>
+<div class="card">
+    <h1>QuickCode Generator</h1>
+    
+    <input type="text" id="userInput" placeholder="Enter text, name, or URL..." value="https://google.com">
+    
+    <button class="btn-generate" onclick="generateAll()">Generate Now</button>
 
+    <div class="output-container">
+        <div class="label">QR Code</div>
         <div id="qrcode"></div>
-        <button onclick="downloadQR()" style="background: #28a745; margin-top:15px;">Download Image</button>
+        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+        <div class="label">Barcode</div>
+        <svg id="barcode"></svg>
     </div>
 
-    <div class="container" id="scan-section">
-        <h2>📷 QR Scanner</h2>
-        <div id="reader"></div>
-        <div class="result-box" id="scan-result">Scanned text will appear here...</div>
-        <button onclick="startScanner()">Initialize Camera</button>
+    <div class="btn-group">
+        <button class="btn-share" onclick="shareContent()">Share Link</button>
+        <button class="btn-download" onclick="downloadQR()">Save QR</button>
     </div>
+</div>
 
-    <script>
-        // --- GENERATOR LOGIC ---
-        let qrContainer = document.getElementById("qrcode");
-        let qrInstance = new QRCode(qrContainer, "");
+<script>
+    const qrDiv = document.getElementById("qrcode");
+    let qr = new QRCode(qrDiv, { width: 200, height: 200 });
 
-        function generateQR() {
-            let text = document.getElementById("text-input").value;
-            let size = document.getElementById("size-setting").value;
+    function generateAll() {
+        const val = document.getElementById("userInput").value;
+        if(!val) return alert("Please enter some text!");
 
-            qrContainer.innerHTML = ""; // Clear old QR
-            qrInstance = new QRCode(qrContainer, {
-                text: text || " ",
-                width: parseInt(size),
-                height: parseInt(size),
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
+        // 1. Update QR Code
+        qr.clear();
+        qr.makeCode(val);
+
+        // 2. Update Barcode
+        JsBarcode("#barcode", val, {
+            format: "CODE128",
+            lineColor: "#000",
+            width: 2,
+            height: 80,
+            displayValue: true
+        });
+    }
+
+    // Share Functionality
+    async function shareContent() {
+        const val = document.getElementById("userInput").value;
+        if (!navigator.share) {
+            alert("Sharing not supported on this browser. Copy the text instead!");
+            return;
+        }
+
+        try {
+            await navigator.share({
+                title: 'Shared from QuickCode',
+                text: 'Check out this generated code for: ' + val,
+                url: val.startsWith('http') ? val : ''
             });
+        } catch (err) {
+            console.log("Error sharing:", err);
         }
+    }
 
-        function downloadQR() {
-            const img = qrContainer.querySelector("img");
-            if (img) {
-                const link = document.createElement("a");
-                link.href = img.src;
-                link.download = "qrcode.png";
-                link.click();
-            } else {
-                alert("Please type something first!");
-            }
+    // Download QR Function
+    function downloadQR() {
+        const img = qrDiv.querySelector("img");
+        if (img) {
+            const link = document.createElement("a");
+            link.href = img.src;
+            link.download = "QR_Code.png";
+            link.click();
         }
+    }
 
-        // --- SCANNER LOGIC ---
-        function onScanSuccess(decodedText, decodedResult) {
-            document.getElementById('scan-result').innerText = `Result: ${decodedText}`;
-            // Optional: Beep or vibrate here
-        }
+    // Run once on load
+    window.onload = generateAll;
+</script>
 
-        function startScanner() {
-            const html5QrCode = new Html5Qrcode("reader");
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-
-            // Start with back camera
-            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
-            .catch(err => {
-                console.error("Camera access denied or error:", err);
-                alert("Camera error: Make sure you are using HTTPS or localhost.");
-            });
-        }
-        
-        // Initial blank QR
-        generateQR();
-    </script>
 </body>
-          </html>
-          
+</html>
