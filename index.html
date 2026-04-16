@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Nexus: Generate & Scan</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin-bottom: 20px; }
+        h2 { color: #333; margin-top: 0; }
+        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background: #0056b3; }
+        #qrcode { display: flex; justify-content: center; margin-top: 20px; }
+        #reader { width: 100%; border-radius: 8px; overflow: hidden; }
+        .result-box { background: #e9ecef; padding: 10px; border-radius: 4px; word-break: break-all; margin-top: 10px; min-height: 40px; }
+        .tab-btn { background: #6c757d; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="gen-section">
+        <h2>🎨 QR Generator</h2>
+        <input type="text" id="text-input" placeholder="Type text or URL here..." oninput="generateQR()">
+        
+        <div id="settings">
+            <label>Size:</label>
+            <select id="size-setting" onchange="generateQR()">
+                <option value="128">Small (128x128)</option>
+                <option value="256" selected>Medium (256x256)</option>
+                <option value="512">Large (512x512)</option>
+            </select>
+        </div>
+
+        <div id="qrcode"></div>
+        <button onclick="downloadQR()" style="background: #28a745; margin-top:15px;">Download Image</button>
+    </div>
+
+    <div class="container" id="scan-section">
+        <h2>📷 QR Scanner</h2>
+        <div id="reader"></div>
+        <div class="result-box" id="scan-result">Scanned text will appear here...</div>
+        <button onclick="startScanner()">Initialize Camera</button>
+    </div>
+
+    <script>
+        // --- GENERATOR LOGIC ---
+        let qrContainer = document.getElementById("qrcode");
+        let qrInstance = new QRCode(qrContainer, "");
+
+        function generateQR() {
+            let text = document.getElementById("text-input").value;
+            let size = document.getElementById("size-setting").value;
+
+            qrContainer.innerHTML = ""; // Clear old QR
+            qrInstance = new QRCode(qrContainer, {
+                text: text || " ",
+                width: parseInt(size),
+                height: parseInt(size),
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        }
+
+        function downloadQR() {
+            const img = qrContainer.querySelector("img");
+            if (img) {
+                const link = document.createElement("a");
+                link.href = img.src;
+                link.download = "qrcode.png";
+                link.click();
+            } else {
+                alert("Please type something first!");
+            }
+        }
+
+        // --- SCANNER LOGIC ---
+        function onScanSuccess(decodedText, decodedResult) {
+            document.getElementById('scan-result').innerText = `Result: ${decodedText}`;
+            // Optional: Beep or vibrate here
+        }
+
+        function startScanner() {
+            const html5QrCode = new Html5Qrcode("reader");
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+            // Start with back camera
+            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+            .catch(err => {
+                console.error("Camera access denied or error:", err);
+                alert("Camera error: Make sure you are using HTTPS or localhost.");
+            });
+        }
+        
+        // Initial blank QR
+        generateQR();
+    </script>
+</body>
+          </html>
+          
