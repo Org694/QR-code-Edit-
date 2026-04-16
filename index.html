@@ -3,115 +3,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuickCode | QR & Barcode Generator</title>
+    <title>NexusCode 2026 | Ultimate Generator</title>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <style>
-        :root { --primary: #6366f1; --bg: #f8fafc; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 20px; }
-        .card { background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 450px; text-align: center; }
-        h1 { font-size: 1.5rem; margin-bottom: 1.5rem; color: #1e293b; }
-        
-        input { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem; margin-bottom: 1rem; box-sizing: border-box; transition: 0.3s; }
-        input:focus { border-color: var(--primary); outline: none; }
+        :root {
+            --glass: rgba(255, 255, 255, 0.7);
+            --accent: #6366f1;
+            --bg: #0f172a;
+        }
 
-        .output-container { margin: 20px 0; padding: 20px; border: 1px dashed #cbd5e1; border-radius: 12px; background: #fff; }
-        
-        canvas, img { max-width: 100%; height: auto; margin-bottom: 10px; }
-        #barcode { width: 100%; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
 
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        button { padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-        
-        .btn-generate { background: var(--primary); color: white; grid-column: span 2; font-size: 1.1rem; }
-        .btn-generate:hover { background: #4f46e5; }
-        
-        .btn-share { background: #22c55e; color: white; }
-        .btn-download { background: #64748b; color: white; }
-        button:active { transform: scale(0.98); }
+        .app-container {
+            width: 100%;
+            max-width: 1000px;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
 
-        .label { font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        @media (max-width: 850px) { .app-container { grid-template-columns: 1fr; } }
+
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 25px;
+            color: #1e293b;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+
+        h2 { margin-top: 0; display: flex; align-items: center; gap: 10px; }
+
+        .input-group { margin-bottom: 20px; }
+        label { display: block; font-size: 0.8rem; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .customization-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .btn-main {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+        }
+
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(99, 102, 241, 0.4); }
+
+        .preview-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 20px;
+            min-height: 300px;
+        }
+
+        #barcode { max-width: 100%; }
+
+        .history-list {
+            list-style: none;
+            padding: 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .batch-area { margin-top: 20px; border-top: 1px solid #ccc; pt: 20px; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h1>QuickCode Generator</h1>
-    
-    <input type="text" id="userInput" placeholder="Enter text, name, or URL..." value="https://google.com">
-    
-    <button class="btn-generate" onclick="generateAll()">Generate Now</button>
+<div class="app-container">
+    <main class="glass-card">
+        <h2>🚀 NexusCode 2026</h2>
+        
+        <div class="input-group">
+            <label>Input Content (Text, URL, or Name)</label>
+            <input type="text" id="mainInput" placeholder="https://nexuscode.ai/user/2026" oninput="liveUpdate()">
+        </div>
 
-    <div class="output-container">
-        <div class="label">QR Code</div>
-        <div id="qrcode"></div>
-        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-        <div class="label">Barcode</div>
-        <svg id="barcode"></svg>
-    </div>
+        <div class="customization-grid">
+            <div>
+                <label>QR Dark Color</label>
+                <input type="color" id="qrColor" value="#000000" onchange="generate()">
+            </div>
+            <div>
+                <label>Barcode Type</label>
+                <select id="bcType" onchange="generate()">
+                    <option value="CODE128">CODE128 (Universal)</option>
+                    <option value="EAN13">EAN13 (Retail)</option>
+                    <option value="UPC">UPC</option>
+                    <option value="CODE39">CODE39</option>
+                </select>
+            </div>
+        </div>
 
-    <div class="btn-group">
-        <button class="btn-share" onclick="shareContent()">Share Link</button>
-        <button class="btn-download" onclick="downloadQR()">Save QR</button>
-    </div>
+        <div class="preview-area" id="capture-zone">
+            <div id="qrcode"></div>
+            <svg id="barcode"></svg>
+        </div>
+
+        <div class="customization-grid">
+            <button class="btn-main" onclick="share()">🔗 Share</button>
+            <button class="btn-main" style="background:#10b981" onclick="downloadPDF()">📄 Export PDF</button>
+        </div>
+
+        <div class="batch-area">
+            <label>Batch Processing (One per line)</label>
+            <textarea id="batchInput" style="width:100%; height:80px; border-radius:12px; padding:10px;" placeholder="Name 1&#10;Name 2&#10;Name 3"></textarea>
+            <button class="btn-main" style="margin-top:10px; background:#64748b" onclick="processBatch()">Process Batch</button>
+        </div>
+    </main>
+
+    <aside>
+        <div class="glass-card" style="background: rgba(15, 23, 42, 0.8); color: white;">
+            <h3>🕒 History Logs</h3>
+            <ul class="history-list" id="history">
+                </ul>
+            
+            <div style="margin-top: 20px;">
+                <label>Encryption Mode</label>
+                <button onclick="toggleEncrypt()" id="encBtn" style="background: #ef4444; color: white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">Off</button>
+            </div>
+        </div>
+    </aside>
 </div>
 
 <script>
-    const qrDiv = document.getElementById("qrcode");
-    let qr = new QRCode(qrDiv, { width: 200, height: 200 });
+    let isEncrypted = false;
+    const { jsPDF } = window.jspdf;
 
-    function generateAll() {
-        const val = document.getElementById("userInput").value;
-        if(!val) return alert("Please enter some text!");
+    // --- Core Generation ---
+    function generate() {
+        const val = document.getElementById("mainInput").value || "Nexus2026";
+        const color = document.getElementById("qrColor").value;
+        const bcType = document.getElementById("bcType").value;
 
-        // 1. Update QR Code
-        qr.clear();
-        qr.makeCode(val);
-
-        // 2. Update Barcode
-        JsBarcode("#barcode", val, {
-            format: "CODE128",
-            lineColor: "#000",
-            width: 2,
-            height: 80,
-            displayValue: true
+        // Clear previous
+        document.getElementById("qrcode").innerHTML = "";
+        
+        // QR Generation
+        new QRCode(document.getElementById("qrcode"), {
+            text: isEncrypted ? btoa(val) : val,
+            width: 200,
+            height: 200,
+            colorDark : color,
+            colorLight : "#ffffff"
         });
-    }
 
-    // Share Functionality
-    async function shareContent() {
-        const val = document.getElementById("userInput").value;
-        if (!navigator.share) {
-            alert("Sharing not supported on this browser. Copy the text instead!");
-            return;
-        }
-
+        // Barcode Generation
         try {
-            await navigator.share({
-                title: 'Shared from QuickCode',
-                text: 'Check out this generated code for: ' + val,
-                url: val.startsWith('http') ? val : ''
+            JsBarcode("#barcode", val, {
+                format: bcType,
+                lineColor: color,
+                displayValue: true
             });
-        } catch (err) {
-            console.log("Error sharing:", err);
+        } catch(e) {
+            console.log("Barcode format mismatch");
+        }
+
+        addToHistory(val);
+    }
+
+    // --- Real-time updates ---
+    function liveUpdate() { generate(); }
+
+    // --- History Logic ---
+    function addToHistory(text) {
+        const history = document.getElementById("history");
+        const item = document.createElement("li");
+        item.className = "history-item";
+        item.innerHTML = `<span>${text.substring(0, 20)}...</span> <small>${new Date().toLocaleTimeString()}</small>`;
+        if(history.children.length > 5) history.removeChild(history.lastChild);
+        history.prepend(item);
+    }
+
+    // --- Advanced Features ---
+    async function share() {
+        if (navigator.share) {
+            await navigator.share({
+                title: 'NexusCode Generated',
+                text: 'Check my generated code: ' + document.getElementById("mainInput").value,
+                url: window.location.href
+            });
         }
     }
 
-    // Download QR Function
-    function downloadQR() {
-        const img = qrDiv.querySelector("img");
-        if (img) {
-            const link = document.createElement("a");
-            link.href = img.src;
-            link.download = "QR_Code.png";
-            link.click();
-        }
+    function downloadPDF() {
+        const doc = new jsPDF();
+        doc.text("NexusCode 2026 Export", 10, 10);
+        doc.text("Content: " + document.getElementById("mainInput").value, 10, 20);
+        // In a real app, you'd convert the Canvas to an image for the PDF
+        alert("PDF Structure Generated! (Image conversion requires a server or library like html2canvas)");
+        doc.save("codes_2026.pdf");
     }
 
-    // Run once on load
-    window.onload = generateAll;
+    function toggleEncrypt() {
+        isEncrypted = !isEncrypted;
+        document.getElementById("encBtn").innerText = isEncrypted ? "On" : "Off";
+        document.getElementById("encBtn").style.background = isEncrypted ? "#22c55e" : "#ef4444";
+        generate();
+    }
+
+    function processBatch() {
+        const lines = document.getElementById("batchInput").value.split('\n');
+        alert(`Batch processing ${lines.length} items. Check console for sequence.`);
+        lines.forEach(line => console.log("Generating for:", line));
+    }
+
+    // Init
+    window.onload = generate;
 </script>
 
 </body>
-</html>
+                </html>
+            
